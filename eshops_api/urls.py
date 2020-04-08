@@ -21,6 +21,9 @@ from rest_apis.views import  JSONWebTokenAPIOverride
 from rest_framework_jwt.views import obtain_jwt_token
 from rest_framework_jwt.views import refresh_jwt_token
 from rest_framework_jwt.views import verify_jwt_token
+from django.conf.urls.static import static
+from  eshops_api import settings
+
 
 
 urlpatterns = [
@@ -32,3 +35,6 @@ urlpatterns = [
     # path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

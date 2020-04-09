@@ -11,5 +11,6 @@ urlpatterns = [
     path('brand/<id>',views.BrandActions.as_view()),
     path('product',views.ProductDetailInfo.as_view()),
     path('product/<id>',views.ProductActions.as_view()),
-    
+    path('filter_category/<id>',views.FilterCategory.as_view()),
+    path('filter_brand/<id>',views.FilterBrand.as_view()),
 ]

@@ -165,8 +165,6 @@ class CategoryActions(views.APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class ShowAllProducts(views.APIView):
-    #try a join query here to join brand,category,images,product table to display
-    #all products
     def get(self,request):
         cursor = connection.cursor()
         cursor.execute(''' select pr.p_id,pr.p_name,pr.p_mrp,pr.p_dis,pr.p_descrip,
@@ -176,7 +174,7 @@ class ShowAllProducts(views.APIView):
             inner join brand br on (br.id=pr.p_id) 
             inner join category cat on (cat.id=pr.p_id) 
             inner join images img on (img.img_pid=pr.p_id);
- ''')
+            ''')
         rows = cursor.fetchall()
         cursor.close()
         result = []
@@ -187,12 +185,53 @@ class ShowAllProducts(views.APIView):
         json_data = json.dumps(result)
         return HttpResponse(json_data, content_type="application/json")
         
-
-
-
+class FilterCategory(views.APIView):
+    
+    def get(self,request,id):
+        # category = self.get_object(id) 
+        cursor = connection.cursor()
+        query = ''' select pr.p_id,pr.p_name,pr.p_mrp,pr.p_dis,pr.p_descrip,
+            br.brand_name,
+            br.id as br_id,cat.cat_name,
+            cat.id as cat_id,img.img_path from product pr 
+            inner join brand br on (br.id=pr.p_id) 
+            inner join category cat on (cat.id=pr.p_id) 
+            inner join images img on (img.img_pid=pr.p_id) AND cat.id={};
+            '''.format(id)
         
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        cursor.close()
+        result = []
+        keys = ('product_id','product_name','product_mrp','product_dis',
+            'product_descrip','brand_name','brand_id','category_name','category_id','image_path')
+        for row in rows:
+            result.append(dict(zip(keys,row)))
+        json_data = json.dumps(result)
+        return HttpResponse(json_data, content_type="application/json")
 
-
+class FilterBrand(views.APIView):
+    def get(self,request,id):
+        cursor = connection.cursor()
+        query = ''' select pr.p_id,pr.p_name,pr.p_mrp,pr.p_dis,pr.p_descrip,
+            br.brand_name,
+            br.id as br_id,cat.cat_name,
+            cat.id as cat_id,img.img_path from product pr 
+            inner join brand br on (br.id=pr.p_id) 
+            inner join category cat on (cat.id=pr.p_id) 
+            inner join images img on (img.img_pid=pr.p_id) AND br.id={};
+            '''.format(id)
+        
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        cursor.close()
+        result = []
+        keys = ('product_id','product_name','product_mrp','product_dis',
+            'product_descrip','brand_name','brand_id','category_name','category_id','image_path')
+        for row in rows:
+            result.append(dict(zip(keys,row)))
+        json_data = json.dumps(result)
+        return HttpResponse(json_data, content_type="application/json")
 
 class JSONWebTokenAPIOverride(ObtainJSONWebToken):
     """

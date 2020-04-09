@@ -56,11 +56,12 @@ class Images(models.Model):
     img_time = models.DateTimeField(blank=True, null=True,auto_now_add=True)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'images'
 
 class Product(models.Model):
     p_id = models.AutoField(primary_key=True)
+    p_name = models.CharField(max_length=30,blank=False, null=False)
     p_caid = models.IntegerField(blank=False, null=False)
     p_brid = models.IntegerField(blank=False, null=False)
     p_mrp = models.IntegerField(blank=False, null=False)
@@ -72,5 +73,7 @@ class Product(models.Model):
     # p_caid = models.ForeignKey(Category,on_delete=models.PROTECT)
 
     class Meta:
-        managed = True
+        managed = False
         db_table = 'product'
+
+

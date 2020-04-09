@@ -7,8 +7,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_apis.models import Register,Brand,Category,Product,Images
 from rest_apis.permission import CustomAuthentication
-from django.http import Http404,JsonResponse
+from django.http import Http404,JsonResponse,HttpResponse
 from eshops_api.settings import MEDIA_ROOT,URL
+from django.db import connection
+import json
+
 
 from django.core.files.storage import FileSystemStorage
 
@@ -45,7 +48,6 @@ class ProductDetailInfo(views.APIView):
             else:
                 return Response({"error":"Extension not supported"},status=status.HTTP_400_BAD_REQUEST)
 
-        # import pdb; pdb.set_trace()
         if product_serializer.is_valid():
             product = product_serializer.save()
         else:
@@ -57,17 +59,14 @@ class ProductDetailInfo(views.APIView):
             filename = fs.save(MEDIA_ROOT+fileobj.name,fileobj)
             Images.objects.create(img_path=URL+fileobj.name,img_pid=product.p_id)
             
-        # import pdb; pdb.set_trace()
         image_objects = Images.objects.filter(img_pid = product.p_id).values()
         #change the serializer response to show proper data
         new_dict = {'results': list(image_objects)}
         new_dict.update(product_serializer.data)
         return JsonResponse(new_dict)
-        # return Response(product_serializer.data,status=status.HTTP_201_CREATED)
 
     def get(self, request, format=None):
         all_product = Product.objects.all()
-        # import pdb; pdb.set_trace()
         serializer = ProductSerializer(all_product, many=True)
         return Response(serializer.data)
 
@@ -164,6 +163,36 @@ class CategoryActions(views.APIView):
         category = self.get_object(id)
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ShowAllProducts(views.APIView):
+    #try a join query here to join brand,category,images,product table to display
+    #all products
+    def get(self,request):
+        cursor = connection.cursor()
+        cursor.execute(''' select pr.p_id,pr.p_name,pr.p_mrp,pr.p_dis,pr.p_descrip,
+            br.brand_name,
+            br.id as br_id,cat.cat_name,
+            cat.id as cat_id,img.img_path from product pr 
+            inner join brand br on (br.id=pr.p_id) 
+            inner join category cat on (cat.id=pr.p_id) 
+            inner join images img on (img.img_pid=pr.p_id);
+ ''')
+        rows = cursor.fetchall()
+        cursor.close()
+        result = []
+        keys = ('product_id','product_name','product_mrp','product_dis',
+            'product_descrip','brand_name','brand_id','category_name','category_id','image_path')
+        for row in rows:
+            result.append(dict(zip(keys,row)))
+        json_data = json.dumps(result)
+        return HttpResponse(json_data, content_type="application/json")
+        
+
+
+
+        
+
+
 
 class JSONWebTokenAPIOverride(ObtainJSONWebToken):
     """
